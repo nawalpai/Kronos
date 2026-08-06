@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
-
-const links = ['Product', 'Timeline', 'Pricing', 'Changelog']
+import { Link } from 'react-router-dom'
 
 export default function Nav() {
   return (
@@ -18,31 +17,12 @@ export default function Nav() {
           <span className="hidden font-mono text-[11px] text-muted sm:inline">v1.0</span>
         </a>
 
-        <ul className="hidden items-center gap-7 md:flex">
-          {links.map((l) => (
-            <li key={l}>
-              <a
-                href={`#${l.toLowerCase()}`}
-                className="focus-ring rounded-md font-body text-sm text-muted transition-colors hover:text-paper"
-              >
-                {l}
-              </a>
-            </li>
-          ))}
-        </ul>
-
-        <div className="flex items-center gap-3">
-          <button className="focus-ring hidden rounded-lg border border-panel-line px-3 py-1.5 font-mono text-xs text-muted transition-colors hover:border-brass/50 hover:text-paper sm:flex sm:items-center sm:gap-2">
-            <span>⌘</span>
-            <span>K</span>
-          </button>
-          <a
-            href="#get-started"
-            className="focus-ring rounded-lg bg-paper px-4 py-2 font-display text-sm font-medium text-ink transition-transform hover:scale-[1.03]"
-          >
-            Start free
-          </a>
-        </div>
+        <Link
+          to="/app"
+          className="focus-ring rounded-lg bg-paper px-4 py-2 font-display text-sm font-medium text-ink transition-transform hover:scale-[1.03]"
+        >
+          Start
+        </Link>
       </nav>
     </motion.header>
   )

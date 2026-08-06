@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import KronosOrb from './KronosOrb'
 
 function LiveClock() {
@@ -51,13 +52,13 @@ export default function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <a
+            <Link
               id="get-started"
-              href="#get-started"
+              to="/app"
               className="focus-ring rounded-xl bg-brass px-6 py-3 font-display text-sm font-semibold text-ink shadow-[0_0_30px_-8px_rgba(201,162,39,0.7)] transition-transform hover:scale-[1.03]"
             >
               Start your first session
-            </a>
+            </Link>
             <a
               href="#product"
               className="focus-ring rounded-xl border border-panel-line px-6 py-3 font-display text-sm font-medium text-paper transition-colors hover:border-teal/50 hover:text-teal"
@@ -65,10 +66,6 @@ export default function Hero() {
               See how it works
             </a>
           </div>
-
-          <p className="mt-5 font-mono text-xs text-muted">
-            No credit card. 2-minute setup. Cancel anytime.
-          </p>
         </motion.div>
 
         <motion.div
