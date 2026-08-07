@@ -1,116 +1,132 @@
-import { useEffect, useRef, useState } from 'react'
-import { Play, Pause, RotateCcw } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 
 type Mode = 'work' | 'short' | 'long'
 
-const DURATIONS: Record<Mode, number> = {
-  work: 25 * 60,
-  short: 5 * 60,
-  long: 15 * 60,
-}
+const DURATIONS: Record<Mode, number> = { work: 25 * 60, short: 5 * 60, long: 15 * 60 }
+const LABELS: Record<Mode, string> = { work: 'Focus', short: 'Short Break', long: 'Long Break' }
+const COLORS: Record<Mode, string> = { work: '#c9a227', short: '#6ee7d8', long: '#a78bfa' }
 
-const LABELS: Record<Mode, string> = {
-  work: 'Focus',
-  short: 'Short break',
-  long: 'Long break',
-}
-
-export default function FocusTimer({ onSessionComplete }: { onSessionComplete: () => void }) {
+export default function FocusTimer() {
   const [mode, setMode] = useState<Mode>('work')
-  const [remaining, setRemaining] = useState(DURATIONS.work)
+  const [seconds, setSeconds] = useState(DURATIONS['work'])
   const [running, setRunning] = useState(false)
-  const intervalRef = useRef<number | null>(null)
+  const [sessions, setSessions] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    setSeconds(DURATIONS[mode])
+    setRunning(false)
+  }, [mode])
 
   useEffect(() => {
     if (running) {
-      intervalRef.current = window.setInterval(() => {
-        setRemaining((r) => {
-          if (r <= 1) {
+      intervalRef.current = setInterval(() => {
+        setSeconds(s => {
+          if (s <= 1) {
             setRunning(false)
-            if (mode === 'work') onSessionComplete()
+            setSessions(n => n + 1)
             return 0
           }
-          return r - 1
+          return s - 1
         })
       }, 1000)
-    }
-    return () => {
+    } else {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, mode])
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [running])
 
-  const switchMode = (m: Mode) => {
-    setMode(m)
-    setRemaining(DURATIONS[m])
-    setRunning(false)
-  }
+  const total   = DURATIONS[mode]
+  const pct     = 1 - seconds / total
+  const color   = COLORS[mode]
+  const mins    = Math.floor(seconds / 60)
+  const secs    = seconds % 60
 
-  const reset = () => {
-    setRemaining(DURATIONS[mode])
-    setRunning(false)
-  }
-
-  const total = DURATIONS[mode]
-  const pct = 1 - remaining / total
-  const r = 46
+  const r  = 54
+  const cx = 68
   const circumference = 2 * Math.PI * r
-  const mm = String(Math.floor(remaining / 60)).padStart(2, '0')
-  const ss = String(remaining % 60).padStart(2, '0')
+  const dash = circumference * pct
 
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="mb-4 flex gap-1.5">
-        {(['work', 'short', 'long'] as Mode[]).map((m) => (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', padding:'0.75rem 0.75rem 0.5rem' }}>
+      <span style={{ fontFamily:'IBM Plex Mono', fontSize:'0.68rem', color:'#3a3748', letterSpacing:'0.12em', marginBottom:'0.6rem' }}>FOCUS TIMER</span>
+
+      {/* Mode tabs */}
+      <div style={{ display:'flex', gap:'0.35rem', marginBottom:'0.75rem' }}>
+        {(['work','short','long'] as Mode[]).map(m => (
           <button
             key={m}
-            onClick={() => switchMode(m)}
-            className={`focus-ring rounded-lg px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide transition-colors ${
-              mode === m ? 'bg-brass/15 text-brass-bright' : 'text-muted hover:text-paper'
-            }`}
+            onClick={() => setMode(m)}
+            style={{
+              flex:1, padding:'0.3rem 0', borderRadius:6, cursor:'pointer',
+              background: mode === m ? `rgba(${m === 'work' ? '201,162,39' : m === 'short' ? '110,231,216' : '167,139,250'},0.15)` : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${mode === m ? color : 'rgba(255,255,255,0.06)'}`,
+              color: mode === m ? color : '#3a3748',
+              fontFamily:'Inter', fontSize:'0.65rem', fontWeight:600,
+              transition:'all 0.2s',
+            }}
           >
             {LABELS[m]}
           </button>
         ))}
       </div>
 
-      <div className="flex items-center gap-5">
-        <svg width="112" height="112" viewBox="0 0 112 112" className="-rotate-90">
-          <circle cx="56" cy="56" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+      {/* SVG ring */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+        <svg width={136} height={136} viewBox="0 0 136 136">
+          {/* Track */}
+          <circle cx={cx} cy={68} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
+          {/* Progress */}
           <circle
-            cx="56"
-            cy="56"
-            r={r}
+            cx={cx} cy={68} r={r}
             fill="none"
-            stroke="#c9a227"
-            strokeWidth="6"
+            stroke={color}
+            strokeWidth={8}
             strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - pct)}
-            style={{ transition: 'stroke-dashoffset 1s linear' }}
+            strokeDasharray={`${dash} ${circumference}`}
+            strokeDashoffset={0}
+            transform="rotate(-90 68 68)"
+            style={{ transition:'stroke-dasharray 0.5s ease, stroke 0.5s ease', filter:`drop-shadow(0 0 6px ${color}80)` }}
           />
+          {/* Time text */}
+          <text x={cx} y={62} textAnchor="middle" fill="#f2f0e8" fontFamily="IBM Plex Mono" fontSize={22} fontWeight={500}>
+            {String(mins).padStart(2,'0')}:{String(secs).padStart(2,'0')}
+          </text>
+          <text x={cx} y={80} textAnchor="middle" fill={color} fontFamily="Inter" fontSize={9} fontWeight={600} letterSpacing={2}>
+            {LABELS[mode].toUpperCase()}
+          </text>
         </svg>
-        <div className="flex-1">
-          <div className="font-mono text-3xl tabular-nums text-paper">
-            {mm}:{ss}
-          </div>
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={() => setRunning((v) => !v)}
-              className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg bg-brass text-ink transition-transform hover:scale-105"
-              aria-label={running ? 'Pause' : 'Start'}
-            >
-              {running ? <Pause size={15} /> : <Play size={15} />}
-            </button>
-            <button
-              onClick={reset}
-              className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-panel-line text-muted transition-colors hover:text-paper"
-              aria-label="Reset"
-            >
-              <RotateCcw size={14} />
-            </button>
-          </div>
+
+        {/* Controls */}
+        <div style={{ display:'flex', gap:'0.6rem', marginTop:'0.6rem', alignItems:'center' }}>
+          <button
+            onClick={() => { setSeconds(DURATIONS[mode]); setRunning(false) }}
+            style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:6, color:'#5a5668', fontSize:'0.75rem', padding:'0.3rem 0.65rem', cursor:'pointer', fontFamily:'Inter' }}
+          >↺</button>
+
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setRunning(r => !r)}
+            style={{
+              background: running ? 'rgba(248,113,113,0.15)' : `rgba(${mode === 'work' ? '201,162,39' : mode === 'short' ? '110,231,216' : '167,139,250'},0.15)`,
+              border: `1px solid ${running ? '#f87171' : color}`,
+              borderRadius: 8, color: running ? '#f87171' : color,
+              fontSize:'0.82rem', padding:'0.4rem 1.2rem',
+              cursor:'pointer', fontFamily:'Space Grotesk', fontWeight:600,
+              boxShadow: running ? '0 0 12px rgba(248,113,113,0.2)' : `0 0 12px ${color}30`,
+              transition:'all 0.2s',
+            }}
+          >
+            {running ? '⏸ Pause' : '▶ Start'}
+          </motion.button>
         </div>
+
+        {sessions > 0 && (
+          <div style={{ marginTop:'0.5rem', fontFamily:'IBM Plex Mono', fontSize:'0.65rem', color:'#3a3748' }}>
+            {sessions} session{sessions > 1 ? 's' : ''} completed today
+          </div>
+        )}
       </div>
     </div>
   )

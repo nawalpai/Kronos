@@ -1,26 +1,36 @@
-export default function StatsRow({
-  focusMinutes,
-  completedTasks,
-  sessions,
-  streak,
-}: {
-  focusMinutes: number
-  completedTasks: number
-  sessions: number
-  streak: number
-}) {
+import { usePersistentState } from '../../lib/usePersistentState'
+
+interface Stats { focusMinutes: number; tasksCompleted: number; streak: number }
+
+export default function StatsRow() {
+  const [stats] = usePersistentState<Stats>('kronos-stats', { focusMinutes: 0, tasksCompleted: 0, streak: 1 })
+
   const items = [
-    { label: "Today's focus", value: `${focusMinutes}m` },
-    { label: 'Completed', value: `${completedTasks}` },
-    { label: 'Sessions', value: `${sessions}` },
-    { label: 'Streak', value: `${streak}d` },
+    { label:'Focus Time',   value: `${stats.focusMinutes}m`,     icon:'⏱', color:'#c9a227' },
+    { label:'Completed',    value: `${stats.tasksCompleted}`,     icon:'✓',  color:'#6ee7d8' },
+    { label:'Streak',       value: `${stats.streak}d`,            icon:'🔥', color:'#f97316' },
+    { label:'Today',        value: new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}), icon:'📅', color:'#a78bfa' },
   ]
+
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-      {items.map((it) => (
-        <div key={it.label} className="glass rounded-xl px-3 py-3 text-center">
-          <div className="font-display text-xl font-semibold text-brass-bright">{it.value}</div>
-          <div className="mt-0.5 text-[10px] leading-tight text-muted">{it.label}</div>
+    <div style={{
+      display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'0.5rem',
+      padding:'0.5rem 0.75rem 0.6rem',
+      borderTop:'1px solid rgba(255,255,255,0.04)',
+      flexShrink:0,
+    }}>
+      {items.map(item => (
+        <div key={item.label} style={{
+          background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.05)',
+          borderRadius:8, padding:'0.5rem 0.6rem', textAlign:'center',
+        }}>
+          <div style={{ fontSize:'0.85rem', marginBottom:'0.15rem' }}>{item.icon}</div>
+          <div style={{ fontFamily:'IBM Plex Mono', fontSize:'0.85rem', fontWeight:500, color:item.color, lineHeight:1 }}>
+            {item.value}
+          </div>
+          <div style={{ fontFamily:'Inter', fontSize:'0.6rem', color:'#3a3748', marginTop:'0.2rem' }}>
+            {item.label}
+          </div>
         </div>
       ))}
     </div>

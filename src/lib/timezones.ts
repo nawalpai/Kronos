@@ -1,107 +1,72 @@
-export type Period = 'morning' | 'afternoon' | 'evening' | 'night'
-
-export interface CityDef {
+export interface CityZone {
   id: string
-  name: string
-  region: string
-  tz: string
-  flag: string
+  city: string
+  country: string
+  iana: string
+  offset: number // UTC offset in hours (approximate, for display)
+  color: string
+  emoji: string
 }
 
-export const CITY_LIBRARY: CityDef[] = [
-  { id: 'tokyo', name: 'Tokyo', region: 'Japan', tz: 'Asia/Tokyo', flag: '🇯🇵' },
-  { id: 'new-york', name: 'New York', region: 'USA', tz: 'America/New_York', flag: '🇺🇸' },
-  { id: 'london', name: 'London', region: 'UK', tz: 'Europe/London', flag: '🇬🇧' },
-  { id: 'dubai', name: 'Dubai', region: 'UAE', tz: 'Asia/Dubai', flag: '🇦🇪' },
-  { id: 'mumbai', name: 'Mumbai', region: 'India', tz: 'Asia/Kolkata', flag: '🇮🇳' },
-  { id: 'paris', name: 'Paris', region: 'France', tz: 'Europe/Paris', flag: '🇫🇷' },
-  { id: 'sydney', name: 'Sydney', region: 'Australia', tz: 'Australia/Sydney', flag: '🇦🇺' },
-  { id: 'singapore', name: 'Singapore', region: 'Singapore', tz: 'Asia/Singapore', flag: '🇸🇬' },
-  { id: 'berlin', name: 'Berlin', region: 'Germany', tz: 'Europe/Berlin', flag: '🇩🇪' },
-  { id: 'los-angeles', name: 'Los Angeles', region: 'USA', tz: 'America/Los_Angeles', flag: '🇺🇸' },
-  { id: 'sao-paulo', name: 'São Paulo', region: 'Brazil', tz: 'America/Sao_Paulo', flag: '🇧🇷' },
-  { id: 'moscow', name: 'Moscow', region: 'Russia', tz: 'Europe/Moscow', flag: '🇷🇺' },
+export const CITY_LIBRARY: CityZone[] = [
+  { id: 'nyc',  city: 'New York',      country: 'USA',          iana: 'America/New_York',    offset: -4,   color: '#f5a623', emoji: '🗽' },
+  { id: 'lon',  city: 'London',        country: 'UK',           iana: 'Europe/London',       offset: 1,    color: '#4f8ef7', emoji: '🎡' },
+  { id: 'tok',  city: 'Tokyo',         country: 'Japan',        iana: 'Asia/Tokyo',          offset: 9,    color: '#a78bfa', emoji: '🗼' },
+  { id: 'syd',  city: 'Sydney',        country: 'Australia',    iana: 'Australia/Sydney',    offset: 10,   color: '#34d399', emoji: '🦘' },
+  { id: 'par',  city: 'Paris',         country: 'France',       iana: 'Europe/Paris',        offset: 2,    color: '#38bdf8', emoji: '🗼' },
+  { id: 'ber',  city: 'Berlin',        country: 'Germany',      iana: 'Europe/Berlin',       offset: 2,    color: '#60a5fa', emoji: '🐻' },
+  { id: 'dxb',  city: 'Dubai',         country: 'UAE',          iana: 'Asia/Dubai',          offset: 4,    color: '#fbbf24', emoji: '🏙️' },
+  { id: 'sin',  city: 'Singapore',     country: 'Singapore',    iana: 'Asia/Singapore',      offset: 8,    color: '#2dd4bf', emoji: '🦁' },
+  { id: 'mum',  city: 'Mumbai',        country: 'India',        iana: 'Asia/Kolkata',        offset: 5.5,  color: '#fb7185', emoji: '🌊' },
+  { id: 'seo',  city: 'Seoul',         country: 'South Korea',  iana: 'Asia/Seoul',          offset: 9,    color: '#c084fc', emoji: '🏯' },
+  { id: 'mos',  city: 'Moscow',        country: 'Russia',       iana: 'Europe/Moscow',       offset: 3,    color: '#f87171', emoji: '🏛️' },
+  { id: 'lax',  city: 'Los Angeles',   country: 'USA',          iana: 'America/Los_Angeles', offset: -7,   color: '#f97316', emoji: '🎬' },
+  { id: 'sao',  city: 'São Paulo',     country: 'Brazil',       iana: 'America/Sao_Paulo',   offset: -3,   color: '#86efac', emoji: '🌿' },
+  { id: 'ist',  city: 'Istanbul',      country: 'Turkey',       iana: 'Europe/Istanbul',     offset: 3,    color: '#fdba74', emoji: '🕌' },
+  { id: 'tor',  city: 'Toronto',       country: 'Canada',       iana: 'America/Toronto',     offset: -4,   color: '#67e8f9', emoji: '🍁' },
+  { id: 'hkg',  city: 'Hong Kong',     country: 'China',        iana: 'Asia/Hong_Kong',      offset: 8,    color: '#818cf8', emoji: '🏮' },
 ]
 
-export function cityLocalDate(tz: string, now: Date): Date {
-  // Build a Date object that reflects the wall-clock time in `tz`.
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: tz,
-    hour12: false,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).formatToParts(now)
+export type TimeOfDay = 'dawn' | 'morning' | 'noon' | 'afternoon' | 'evening' | 'night'
 
-  const map: Record<string, string> = {}
-  for (const p of parts) map[p.type] = p.value
-
-  return new Date(
-    Number(map.year),
-    Number(map.month) - 1,
-    Number(map.day),
-    Number(map.hour) === 24 ? 0 : Number(map.hour),
-    Number(map.minute),
-    Number(map.second)
-  )
-}
-
-export function periodOf(hour: number): Period {
-  if (hour >= 5 && hour < 12) return 'morning'
-  if (hour >= 12 && hour < 17) return 'afternoon'
-  if (hour >= 17 && hour < 20) return 'evening'
+export function getTimeOfDay(hour: number): TimeOfDay {
+  if (hour >= 5  && hour < 7)  return 'dawn'
+  if (hour >= 7  && hour < 11) return 'morning'
+  if (hour >= 11 && hour < 14) return 'noon'
+  if (hour >= 14 && hour < 18) return 'afternoon'
+  if (hour >= 18 && hour < 21) return 'evening'
   return 'night'
 }
 
-export function formatTime(d: Date, format: '12h' | '24h'): { time: string; suffix: string } {
-  if (format === '24h') {
-    return {
-      time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
-      suffix: '',
-    }
+export function getGreeting(hour: number): string {
+  if (hour >= 5  && hour < 12) return 'Good Morning'
+  if (hour >= 12 && hour < 17) return 'Good Afternoon'
+  if (hour >= 17 && hour < 21) return 'Good Evening'
+  return 'Good Night'
+}
+
+export function getLocalTime(iana: string): Date {
+  // Use Intl to get the correct time in the target timezone
+  const now = new Date()
+  const str = now.toLocaleString('en-US', { timeZone: iana })
+  return new Date(str)
+}
+
+export function formatTime(date: Date, use24h = false): string {
+  if (use24h) {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
   }
-  const h = d.getHours()
-  const suffix = h >= 12 ? 'PM' : 'AM'
-  const h12 = h % 12 === 0 ? 12 : h % 12
-  return { time: `${String(h12).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`, suffix }
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
-export function formatDate(d: Date): string {
-  return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
+export function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-export function utcOffsetLabel(tz: string, now: Date): string {
-  const dtf = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' })
-  const part = dtf.formatToParts(now).find((p) => p.type === 'timeZoneName')
-  return part?.value.replace('GMT', 'UTC') ?? ''
-}
-
-export const PERIOD_GRADIENT: Record<Period, { top: string; bottom: string; glow: string; label: string }> = {
-  morning: {
-    top: '#2c2440',
-    bottom: '#8a4a2c',
-    glow: 'rgba(255,176,110,0.35)',
-    label: 'Sunrise',
-  },
-  afternoon: {
-    top: '#1a3350',
-    bottom: '#3f7fb0',
-    glow: 'rgba(120,190,255,0.3)',
-    label: 'Daylight',
-  },
-  evening: {
-    top: '#241634',
-    bottom: '#7a3550',
-    glow: 'rgba(255,130,110,0.32)',
-    label: 'Sunset',
-  },
-  night: {
-    top: '#05060c',
-    bottom: '#0d1330',
-    glow: 'rgba(110,150,255,0.18)',
-    label: 'Moonlight',
-  },
+export function offsetLabel(off: number): string {
+  const sign = off >= 0 ? '+' : '-'
+  const abs  = Math.abs(off)
+  const h    = Math.floor(abs)
+  const m    = Math.round((abs - h) * 60)
+  return m > 0 ? `UTC${sign}${h}:${String(m).padStart(2, '0')}` : `UTC${sign}${h}`
 }

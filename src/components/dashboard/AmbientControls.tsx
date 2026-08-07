@@ -1,144 +1,82 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, CloudRain, Music, Wind, Keyboard } from 'lucide-react'
 
-export interface AmbientState {
-  rain: boolean
-  music: boolean
-  wind: boolean
-  keySounds: boolean
-  clockFormat: '12h' | '24h'
-  particleDensity: 'low' | 'medium' | 'high'
+interface Props {
+  rainActive: boolean
+  musicActive: boolean
+  onToggleRain: () => void
+  onToggleMusic: () => void
 }
 
-function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`focus-ring relative h-5 w-9 rounded-full transition-colors ${on ? 'bg-brass' : 'bg-white/10'}`}
-      role="switch"
-      aria-checked={on}
-    >
-      <motion.span
-        layout
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        className="absolute top-0.5 h-4 w-4 rounded-full bg-paper"
-        style={{ left: on ? 18 : 2 }}
-      />
-    </button>
-  )
-}
-
-export default function AmbientControls({
-  state,
-  setState,
-}: {
-  state: AmbientState
-  setState: (s: AmbientState) => void
-}) {
+export default function AmbientControls({ rainActive, musicActive, onToggleRain, onToggleMusic }: Props) {
   const [open, setOpen] = useState(false)
-  const patch = (p: Partial<AmbientState>) => setState({ ...state, ...p })
+
+  const controls = [
+    { icon: '🌧', label:'Rain',  active: rainActive,  action: onToggleRain },
+    { icon: '🎵', label:'Music', active: musicActive, action: onToggleMusic },
+  ]
 
   return (
-    <div className="fixed bottom-5 right-5 z-40">
+    <div style={{ position:'relative' }}>
+      <motion.button
+        whileHover={{ scale:1.05 }}
+        whileTap={{ scale:0.95 }}
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width:34, height:34, borderRadius:'50%',
+          background: open ? 'rgba(201,162,39,0.15)' : 'rgba(255,255,255,0.04)',
+          border:`1px solid ${open ? 'rgba(201,162,39,0.4)' : 'rgba(255,255,255,0.08)'}`,
+          color: open ? '#c9a227' : '#5a5668', fontSize:'0.9rem',
+          cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+          transition:'all 0.2s',
+        }}
+      >✦</motion.button>
+
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.96 }}
-            transition={{ duration: 0.2 }}
-            className="glass mb-3 w-64 rounded-2xl p-4"
+            initial={{ opacity:0, y:8, scale:0.95 }}
+            animate={{ opacity:1, y:0, scale:1 }}
+            exit={{ opacity:0, y:8, scale:0.95 }}
+            style={{
+              position:'absolute', bottom:'calc(100% + 8px)', right:0,
+              background:'rgba(12,13,20,0.95)', border:'1px solid rgba(201,162,39,0.12)',
+              borderRadius:12, padding:'0.6rem', minWidth:130,
+              backdropFilter:'blur(12px)',
+              boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
+            }}
           >
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Ambient</h3>
-              <button onClick={() => setOpen(false)} className="focus-ring text-muted hover:text-paper">
-                <X size={14} />
+            <div style={{ fontFamily:'IBM Plex Mono', fontSize:'0.6rem', color:'#3a3748', letterSpacing:'0.1em', marginBottom:'0.5rem', padding:'0 0.25rem' }}>
+              AMBIENT
+            </div>
+            {controls.map(c => (
+              <button
+                key={c.label}
+                onClick={c.action}
+                style={{
+                  display:'flex', width:'100%', alignItems:'center', gap:'0.5rem',
+                  padding:'0.4rem 0.5rem', borderRadius:8, cursor:'pointer',
+                  background: c.active ? 'rgba(201,162,39,0.1)' : 'transparent',
+                  border:`1px solid ${c.active ? 'rgba(201,162,39,0.2)' : 'transparent'}`,
+                  transition:'all 0.15s', marginBottom:'0.25rem',
+                }}
+              >
+                <span style={{ fontSize:'0.9rem' }}>{c.icon}</span>
+                <span style={{ fontFamily:'Inter', fontSize:'0.75rem', color: c.active ? '#c9a227' : '#5a5668', fontWeight:500 }}>
+                  {c.label}
+                </span>
+                <div style={{
+                  marginLeft:'auto', width:8, height:8, borderRadius:'50%',
+                  background: c.active ? '#c9a227' : '#1a1828',
+                  border:'1px solid rgba(255,255,255,0.1)',
+                  boxShadow: c.active ? '0 0 6px rgba(201,162,39,0.6)' : 'none',
+                  transition:'all 0.2s',
+                }} />
               </button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm text-paper">
-                  <CloudRain size={14} className="text-muted" /> Rain
-                </span>
-                <Toggle on={state.rain} onClick={() => patch({ rain: !state.rain })} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm text-paper">
-                  <Music size={14} className="text-muted" /> Ambient music
-                </span>
-                <Toggle on={state.music} onClick={() => patch({ music: !state.music })} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm text-paper">
-                  <Wind size={14} className="text-muted" /> Wind
-                </span>
-                <Toggle on={state.wind} onClick={() => patch({ wind: !state.wind })} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm text-paper">
-                  <Keyboard size={14} className="text-muted" /> Key sounds
-                </span>
-                <Toggle on={state.keySounds} onClick={() => patch({ keySounds: !state.keySounds })} />
-              </div>
-
-              <div className="border-t border-panel-line pt-3">
-                <div className="mb-1.5 flex items-center justify-between text-sm text-paper">
-                  <span>Clock format</span>
-                  <div className="flex gap-1">
-                    {(['12h', '24h'] as const).map((f) => (
-                      <button
-                        key={f}
-                        onClick={() => patch({ clockFormat: f })}
-                        className={`focus-ring rounded-md px-2 py-0.5 font-mono text-[10px] ${
-                          state.clockFormat === f ? 'bg-brass/20 text-brass-bright' : 'text-muted hover:text-paper'
-                        }`}
-                      >
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-1.5 flex items-center justify-between text-sm text-paper">
-                  <span>Particle density</span>
-                  <div className="flex gap-1">
-                    {(['low', 'medium', 'high'] as const).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => patch({ particleDensity: d })}
-                        className={`focus-ring rounded-md px-2 py-0.5 font-mono text-[10px] ${
-                          state.particleDensity === d
-                            ? 'bg-brass/20 text-brass-bright'
-                            : 'text-muted hover:text-paper'
-                        }`}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {state.music && (
-                <p className="pt-1 text-[10px] leading-snug text-muted">
-                  Ambient audio isn't wired up yet — this toggle is ready for when a sound source is added.
-                </p>
-              )}
-            </div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
-
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="focus-ring glass flex h-11 w-11 items-center justify-center rounded-full text-paper transition-transform hover:scale-105"
-        aria-label="Ambient controls"
-      >
-        <Settings size={17} />
-      </button>
     </div>
   )
 }

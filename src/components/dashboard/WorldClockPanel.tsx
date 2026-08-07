@@ -1,138 +1,171 @@
-import { useMemo, useState } from 'react'
-import { Reorder } from 'framer-motion'
-import { Plus, X } from 'lucide-react'
-import {
-  CITY_LIBRARY,
-  cityLocalDate,
-  periodOf,
-  formatTime,
-  type CityDef,
-} from '../../lib/timezones'
+import { useState } from 'react'
+import { motion, Reorder } from 'framer-motion'
+import { useNow } from '../../lib/useNow'
+import { CITY_LIBRARY, formatTime, formatDate, getTimeOfDay, getGreeting, offsetLabel } from '../../lib/timezones'
+import type { CityZone } from '../../lib/timezones'
 
-const PERIOD_DOT: Record<string, string> = {
-  morning: 'bg-orange-300',
-  afternoon: 'bg-teal',
-  evening: 'bg-rose-300',
-  night: 'bg-indigo-300',
+interface Props {
+  cities: CityZone[]
+  activeCity: CityZone
+  onReorder: (cities: CityZone[]) => void
+  onSetActive: (city: CityZone) => void
+  onAdd: (city: CityZone) => void
+  onRemove: (id: string) => void
+  use24h: boolean
 }
 
-export default function WorldClockPanel({
-  now,
-  cityIds,
-  setCityIds,
-  activeId,
-  setActiveId,
-  clockFormat,
-}: {
-  now: Date
-  cityIds: string[]
-  setCityIds: (ids: string[]) => void
-  activeId: string
-  setActiveId: (id: string) => void
-  clockFormat: '12h' | '24h'
-}) {
-  const [pickerOpen, setPickerOpen] = useState(false)
+export default function WorldClockPanel({ cities, activeCity, onReorder, onSetActive, onAdd, onRemove, use24h }: Props) {
+  const now = useNow()
+  const [showAdd, setShowAdd] = useState(false)
+  const [search, setSearch] = useState('')
 
-  const cities = useMemo(
-    () => cityIds.map((id) => CITY_LIBRARY.find((c) => c.id === id)).filter(Boolean) as CityDef[],
-    [cityIds]
+  const available = CITY_LIBRARY.filter(c =>
+    !cities.find(x => x.id === c.id) &&
+    (c.city.toLowerCase().includes(search.toLowerCase()) || c.country.toLowerCase().includes(search.toLowerCase()))
   )
 
-  const available = CITY_LIBRARY.filter((c) => !cityIds.includes(c.id))
-
-  const removeCity = (id: string) => {
-    if (cityIds.length <= 1) return
-    const next = cityIds.filter((c) => c !== id)
-    setCityIds(next)
-    if (activeId === id) setActiveId(next[0])
+  function getLocalDate(city: CityZone) {
+    const str = now.toLocaleString('en-US', { timeZone: city.iana })
+    return new Date(str)
   }
 
-  const addCity = (id: string) => {
-    setCityIds([...cityIds, id])
-    setPickerOpen(false)
+  const todLabels: Record<string, string> = {
+    dawn: '🌅 Dawn', morning: '🌤 Morning', noon: '☀️ Noon',
+    afternoon: '⛅ Afternoon', evening: '🌆 Evening', night: '🌙 Night',
   }
 
   return (
-    <aside className="glass flex h-full w-full flex-col rounded-2xl p-4">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
-          World clocks
-        </h2>
-        <div className="relative">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '1rem 1rem 0.75rem', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.7rem', color: '#5a5668', letterSpacing: '0.12em' }}>
+            WORLD CLOCKS
+          </span>
           <button
-            onClick={() => setPickerOpen((v) => !v)}
-            className="focus-ring flex h-6 w-6 items-center justify-center rounded-md border border-panel-line text-muted transition-colors hover:border-brass/50 hover:text-brass-bright"
-            aria-label="Add city"
+            onClick={() => setShowAdd(v => !v)}
+            style={{
+              background: showAdd ? 'rgba(201,162,39,0.15)' : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${showAdd ? 'rgba(201,162,39,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              borderRadius: '6px', color: showAdd ? '#c9a227' : '#5a5668',
+              fontSize: '0.75rem', padding: '0.25rem 0.6rem', cursor: 'pointer',
+              fontFamily: 'Space Grotesk', transition: 'all 0.2s',
+            }}
           >
-            <Plus size={13} />
+            {showAdd ? '✕ Close' : '+ Add'}
           </button>
-          {pickerOpen && (
-            <div className="glass absolute right-0 top-8 z-20 max-h-64 w-48 overflow-y-auto rounded-xl p-1.5">
-              {available.length === 0 && (
-                <p className="px-2 py-2 text-xs text-muted">All cities added</p>
-              )}
-              {available.map((c) => (
+        </div>
+
+        {/* Add city search */}
+        {showAdd && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ overflow: 'hidden' }}>
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search city…"
+              style={{
+                width: '100%', background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px',
+                color: '#f2f0e8', fontFamily: 'Inter', fontSize: '0.82rem',
+                padding: '0.5rem 0.75rem', outline: 'none', marginBottom: '0.5rem',
+              }}
+            />
+            <div style={{ maxHeight: '160px', overflowY: 'auto' }}>
+              {available.map(c => (
                 <button
                   key={c.id}
-                  onClick={() => addCity(c.id)}
-                  className="focus-ring flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-paper transition-colors hover:bg-white/5"
+                  onClick={() => { onAdd(c); setSearch(''); }}
+                  style={{
+                    display: 'flex', width: '100%', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.4rem 0.5rem', background: 'none', border: 'none',
+                    cursor: 'pointer', borderRadius: '6px', textAlign: 'left',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,162,39,0.07)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                 >
-                  <span>{c.flag}</span>
-                  <span>{c.name}</span>
+                  <span style={{ fontSize: '0.85rem' }}>{c.emoji}</span>
+                  <span style={{ fontFamily: 'Inter', fontSize: '0.8rem', color: '#c8c4d4', flex: 1 }}>{c.city}</span>
+                  <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.65rem', color: '#3a3748' }}>{offsetLabel(c.offset)}</span>
                 </button>
               ))}
             </div>
-          )}
-        </div>
+          </motion.div>
+        )}
       </div>
 
-      <Reorder.Group
-        axis="y"
-        values={cityIds}
-        onReorder={setCityIds}
-        className="flex flex-1 flex-col gap-1.5 overflow-y-auto pr-1"
-      >
-        {cities.map((c) => {
-          const local = cityLocalDate(c.tz, now)
-          const period = periodOf(local.getHours())
-          const { time, suffix } = formatTime(local, clockFormat)
-          const active = c.id === activeId
-          return (
-            <Reorder.Item
-              key={c.id}
-              value={c.id}
-              onClick={() => setActiveId(c.id)}
-              className={`focus-ring group cursor-pointer rounded-xl border px-3 py-2.5 transition-colors ${
-                active
-                  ? 'border-brass/50 bg-brass/10'
-                  : 'border-transparent hover:border-panel-line hover:bg-white/[0.03]'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`h-1.5 w-1.5 rounded-full ${PERIOD_DOT[period]}`} />
-                  <span className="font-display text-sm font-medium text-paper">{c.name}</span>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    removeCity(c.id)
+      {/* Clock cards — reorderable */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0.75rem' }}>
+        <Reorder.Group axis="y" values={cities} onReorder={onReorder} style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          {cities.map(city => {
+            const d = getLocalDate(city)
+            const tod = getTimeOfDay(d.getHours())
+            const isActive = city.id === activeCity.id
+
+            return (
+              <Reorder.Item key={city.id} value={city} style={{ listStyle: 'none' }}>
+                <motion.div
+                  whileHover={{ x: 2 }}
+                  onClick={() => onSetActive(city)}
+                  style={{
+                    background: isActive ? 'rgba(201,162,39,0.08)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${isActive ? 'rgba(201,162,39,0.25)' : 'rgba(255,255,255,0.05)'}`,
+                    borderLeft: `3px solid ${isActive ? city.color : 'transparent'}`,
+                    borderRadius: '8px', padding: '0.65rem 0.75rem',
+                    cursor: 'pointer', position: 'relative',
+                    transition: 'border-color 0.2s, background 0.2s',
                   }}
-                  className="focus-ring rounded p-0.5 text-muted opacity-0 transition-opacity hover:text-paper group-hover:opacity-100"
-                  aria-label={`Remove ${c.name}`}
                 >
-                  <X size={12} />
-                </button>
-              </div>
-              <div className="mt-1 flex items-baseline gap-1.5 pl-3.5">
-                <span className="font-mono text-lg tabular-nums text-paper">{time}</span>
-                {suffix && <span className="font-mono text-[10px] text-muted">{suffix}</span>}
-                <span className="ml-auto font-mono text-[10px] uppercase text-muted">{period}</span>
-              </div>
-            </Reorder.Item>
-          )
-        })}
-      </Reorder.Group>
-    </aside>
+                  {/* Remove btn */}
+                  {!isActive && (
+                    <button
+                      onClick={e => { e.stopPropagation(); onRemove(city.id) }}
+                      style={{
+                        position: 'absolute', top: '0.4rem', right: '0.5rem',
+                        background: 'none', border: 'none', color: '#2a2830',
+                        cursor: 'pointer', fontSize: '0.7rem', lineHeight: 1,
+                        padding: '0.15rem 0.3rem', borderRadius: '4px',
+                        transition: 'color 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+                      onMouseLeave={e => (e.currentTarget.style.color = '#2a2830')}
+                    >✕</button>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1rem', lineHeight: 1.2 }}>{city.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 600, fontSize: '0.82rem', color: '#f2f0e8' }}>
+                          {city.city}
+                        </span>
+                        <span style={{ fontFamily: 'IBM Plex Mono', fontSize: '0.6rem', color: '#3a3748' }}>
+                          {offsetLabel(city.offset)}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: 'IBM Plex Mono', fontSize: '1rem', fontWeight: 500, color: isActive ? city.color : '#c8c4d4', lineHeight: 1.3, marginTop: '0.1rem' }}>
+                        {formatTime(d, use24h)}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.2rem' }}>
+                        <span style={{ fontFamily: 'Inter', fontSize: '0.65rem', color: '#3a3748' }}>
+                          {formatDate(d)}
+                        </span>
+                        <span style={{ fontFamily: 'Inter', fontSize: '0.65rem', color: '#3a3748' }}>
+                          {todLabels[tod]}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: 'Inter', fontSize: '0.65rem', color: city.color, opacity: 0.8, marginTop: '0.15rem' }}>
+                        {getGreeting(d.getHours())}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </Reorder.Item>
+            )
+          })}
+        </Reorder.Group>
+      </div>
+    </div>
   )
 }
