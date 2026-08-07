@@ -1,17 +1,381 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Kronos — an AI productivity workspace for students, professionals, and developers. Tasks, notes, and focus, orchestrated around time." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <title>Kronos — Time, orchestrated</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KRONOS — World Time & Study Ambient</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ══ SIDEBAR ══ -->
+  <div class="sidebar">
+    <div class="brand">
+      <div class="b-icon">🕐</div>
+      <div>
+        <div class="b-name">KRONOS</div>
+        <div class="b-tag">World Time · Study Ambient</div>
+      </div>
+    </div>
+
+    <div class="active-zone">
+      <div class="az-label">Active Timezone</div>
+      <div class="az-city">
+        <span id="az-city">Calcutta, India</span>
+        <span class="tod-pill tp-night" id="az-pill">Night</span>
+      </div>
+      <div class="hero-t" id="hero-t">--:--:--</div>
+      <div class="hero-d" id="hero-d">--</div>
+    </div>
+
+    <!-- Search -->
+    <div class="tz-search-wrap">
+      <div class="tz-search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="tz-search" class="tz-search-input" placeholder="Search city or timezone…" autocomplete="off" />
+        <button class="search-clear" id="search-clear" title="Clear">✕</button>
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <div class="sec-hdr">World Clocks</div>
+    <div class="clocks" id="clocks">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+
+  <!-- ══ SCENE ══ -->
+  <div class="scene" id="scene">
+
+    <!-- Sky & stars -->
+    <div class="sky" id="sky"><div class="sky-grad" id="sky-grad"></div></div>
+    <div class="stars-layer" id="stars"></div>
+
+    <!-- Sun -->
+    <div class="sun-wrap" id="sun-wrap">
+      <div class="sun" id="sun">
+        <div class="sun-ray" style="--ra:0deg"></div>
+        <div class="sun-ray" style="--ra:45deg"></div>
+        <div class="sun-ray" style="--ra:90deg"></div>
+        <div class="sun-ray" style="--ra:135deg"></div>
+        <div class="sun-ray" style="--ra:180deg"></div>
+        <div class="sun-ray" style="--ra:225deg"></div>
+        <div class="sun-ray" style="--ra:270deg"></div>
+        <div class="sun-ray" style="--ra:315deg"></div>
+      </div>
+      <div class="sunlight" id="sunlight"></div>
+    </div>
+
+    <!-- Clouds -->
+    <div class="cloud" id="cloud1" style="top:52px;left:0;width:190px;height:28px;--cd:34s;--cdl:-6s"></div>
+    <div class="cloud" id="cloud2" style="top:78px;left:0;width:250px;height:20px;--cd:46s;--cdl:-22s"></div>
+    <div class="cloud" id="cloud3" style="top:38px;left:0;width:140px;height:16px;--cd:28s;--cdl:-14s"></div>
+
+    <!-- Rain canvas -->
+    <canvas class="rain-canvas" id="rain-canvas"></canvas>
+
+    <!-- Moon -->
+    <div class="moon-wrap" id="moon-wrap">
+      <div class="moon">
+        <div class="moon-shadow"></div>
+        <div class="moon-crater" style="width:7px;height:7px;top:12px;left:14px;opacity:.6"></div>
+        <div class="moon-crater" style="width:4px;height:4px;top:22px;left:22px;opacity:.4"></div>
+        <div class="moon-crater" style="width:5px;height:5px;top:8px;left:28px;opacity:.35"></div>
+      </div>
+    </div>
+    <div class="moonlight" id="moonlight"></div>
+
+    <!-- Location bar -->
+    <div class="loc-bar">
+      <div class="loc-pill">
+        <span style="font-size:13px" id="loc-icon">🌙</span>
+        <span class="loc-txt" id="loc-city-name">Calcutta</span>
+        <div class="loc-div"></div>
+        <span class="loc-sub" id="loc-offset">IST +5:30</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="set-btn" id="rain-toggle-btn" title="Toggle Rain">🌧</button>
+        <button class="set-btn" id="music-btn" title="Toggle Ambient Music">🔇</button>
+        <button class="set-btn" id="tz-toggle-btn" title="World Clocks">🌐</button>
+        <button class="set-btn" id="settings-btn" title="About KRONOS">⚙</button>
+      </div>
+    </div>
+
+    <!-- Scene world clock pills -->
+    <div class="wc-pill" style="top:60px;left:12px">
+      <div class="wcp-dot" style="background:#4f8ef7"></div>
+      <span class="wcp-city">London</span>
+      <span class="wcp-time" id="wp-lon">--:--</span>
+    </div>
+    <div class="wc-pill" style="top:60px;right:12px">
+      <div class="wcp-dot" style="background:#f5a623"></div>
+      <span class="wcp-city">New York</span>
+      <span class="wcp-time" id="wp-nyc">--:--</span>
+    </div>
+    <div class="wc-pill" style="top:97px;left:12px">
+      <div class="wcp-dot" style="background:#a78bfa"></div>
+      <span class="wcp-city">Tokyo</span>
+      <span class="wcp-time" id="wp-tok">--:--</span>
+    </div>
+    <div class="wc-pill" style="top:97px;right:12px">
+      <div class="wcp-dot" style="background:#34d399"></div>
+      <span class="wcp-city">Sydney</span>
+      <span class="wcp-time" id="wp-syd">--:--</span>
+    </div>
+
+    <!-- ── WALL ── -->
+    <div class="wall">
+      <div class="wall-texture"></div>
+      <div class="wall-top-edge"></div>
+
+      <!-- Window -->
+      <div class="win-frame">
+        <div class="win-cross-h"></div>
+        <div class="win-cross-v"></div>
+        <div class="pane" style="inset:0 50% 50% 0">
+          <div class="pane-star" style="width:2px;height:2px;top:22%;left:32%;--d:3.2s;--dl:0s;--o:.9"></div>
+          <div class="pane-star" style="width:1.5px;height:1.5px;top:58%;left:62%;--d:2.4s;--dl:-.8s;--o:.7"></div>
+          <div class="win-reflect"></div>
+        </div>
+        <div class="pane" style="inset:0 0 50% 50%">
+          <div class="pane-star" style="width:1.5px;height:1.5px;top:32%;left:38%;--d:2.8s;--dl:-.5s;--o:.8"></div>
+          <div class="pane-star" style="width:2px;height:2px;top:62%;left:66%;--d:3.6s;--dl:-1.1s;--o:.6"></div>
+        </div>
+        <div class="pane" style="inset:50% 50% 0 0">
+          <div class="pane-star" style="width:1px;height:1px;top:28%;left:50%;--d:3s;--dl:-2s;--o:.7"></div>
+          <div class="pane-star" style="width:1.5px;height:1.5px;top:62%;left:22%;--d:2.6s;--dl:-.3s;--o:.6"></div>
+        </div>
+        <div class="pane" style="inset:50% 0 0 50%">
+          <div class="pane-star" style="width:2px;height:2px;top:38%;left:58%;--d:3.4s;--dl:-.9s;--o:.85"></div>
+          <div class="pane-star" style="width:1px;height:1px;top:68%;left:32%;--d:2.2s;--dl:-1.7s;--o:.5"></div>
+        </div>
+        <div class="win-sill"></div>
+        <div class="crod"></div>
+        <div class="cring" style="left:5px"></div><div class="cring" style="left:18px"></div>
+        <div class="cring" style="left:31px"></div><div class="cring" style="left:44px"></div>
+        <div class="cring" style="left:57px"></div><div class="cring" style="left:70px"></div>
+        <div class="cring" style="left:83px"></div><div class="cring" style="left:96px"></div>
+        <div class="cring" style="left:109px"></div><div class="cring" style="left:122px"></div>
+      </div>
+
+      <!-- Curtains -->
+      <div class="curtain c-left"  style="--sw:10s;--sdl:0s"><div class="c-stripe"></div><div class="c-sheen"></div></div>
+      <div class="curtain c-right" style="--sw:11.5s;--sdl:-5.5s"><div class="c-stripe"></div><div class="c-sheen"></div></div>
+    </div>
+
+    <div class="baseboard"></div>
+    <div class="floor"><div class="floor-boards"></div></div>
+
+    <!-- Desk -->
+    <div class="desk-surface"></div>
+    <div class="desk-front"></div>
+    <div class="desk-leg dl-l"></div>
+    <div class="desk-leg dl-r"></div>
+
+    <!-- Lamp -->
+    <div class="lamp-group">
+      <div class="lamp-base"></div>
+      <div class="lamp-pole"></div>
+      <div class="lamp-joint"></div>
+      <div class="lamp-neck"></div>
+      <div class="lamp-shade">
+        <div class="shade-inner"></div>
+        <div class="lamp-bulb"></div>
+      </div>
+      <div class="lamp-cone"></div>
+    </div>
+
+    <!-- Coffee Mug -->
+    <div class="coffee-group">
+      <div class="steam-w">
+        <div class="stm" style="height:18px;--sd:2.3s;--sdl:0s"></div>
+        <div class="stm" style="height:22px;--sd:2.9s;--sdl:-.75s"></div>
+        <div class="stm" style="height:16px;--sd:2.5s;--sdl:-1.5s"></div>
+      </div>
+      <div class="mug-outer">
+        <div class="mug-inner-top"></div>
+        <div class="coffee-surface">
+          <div class="coffee-ring" style="width:16px;height:5px;top:0;left:2px"></div>
+          <div class="coffee-ring" style="width:10px;height:3px;top:1px;left:8px;opacity:.5"></div>
+        </div>
+        <div class="mug-handle"></div>
+        <div class="mug-logo"></div>
+      </div>
+      <div class="saucer"></div>
+    </div>
+
+    <!-- Book stack -->
+    <div class="book-stack">
+      <div class="stacked-book" style="width:54px;height:8px;background:#1d3060;border-left-color:#3050a0"></div>
+      <div class="stacked-book" style="width:50px;height:9px;background:#1e3a1e;border-left-color:#305030"></div>
+      <div class="stacked-book" style="width:52px;height:8px;background:#3d1515;border-left-color:#6a2020"></div>
+    </div>
+
+    <!-- Notepad -->
+    <div class="notepad">
+      <div class="notepad-top"></div>
+      <div class="np-lines">
+        <div class="np-line"></div><div class="np-line"></div>
+        <div class="np-line"></div><div class="np-line"></div>
+        <div class="np-line"></div><div class="np-line"></div>
+      </div>
+    </div>
+
+    <!-- Pencil cup -->
+    <div class="pencil-cup">
+      <div class="pncl" style="left:3px;bottom:30px;height:40px;background:#e8a020"></div>
+      <div class="pncl" style="left:9px;bottom:30px;height:34px;background:#c03030"></div>
+      <div class="pncl" style="left:15px;bottom:30px;height:38px;background:#4060c0"></div>
+    </div>
+
+    <!-- Old PC -->
+    <div class="pc-group">
+      <div class="pc-monitor">
+        <div class="pc-bezel-top"></div>
+        <div class="pc-cam-dot"></div>
+        <div class="pc-screen">
+          <div class="code-area" id="code-area"></div>
+          <div class="crt-scanline"></div>
+          <div class="crt-vignette"></div>
+          <div class="crt-flicker"></div>
+        </div>
+        <div class="pc-glow-aura"></div>
+      </div>
+      <div class="pc-tower">
+        <div class="tower-faceplate">
+          <div class="tower-led"></div>
+          <div class="tower-led2"></div>
+          <div class="tower-drive"></div>
+          <div class="tower-usb"></div>
+          <div class="tower-vent">
+            <div class="vent-slot"></div>
+            <div class="vent-slot"></div>
+            <div class="vent-slot"></div>
+          </div>
+        </div>
+      </div>
+      <div class="monitor-neck"></div>
+      <div class="monitor-stand"></div>
+      <div class="pc-keyboard">
+        <div class="kb-keys">
+          <div class="kb-row-keys">
+            <div class="kb-key"></div><div class="kb-key"></div><div class="kb-key"></div>
+            <div class="kb-key"></div><div class="kb-key"></div><div class="kb-key"></div>
+            <div class="kb-key"></div><div class="kb-key"></div><div class="kb-key"></div>
+            <div class="kb-key"></div>
+          </div>
+          <div class="kb-row-keys">
+            <div class="kb-key wide"></div>
+            <div class="kb-key"></div><div class="kb-key"></div><div class="kb-key"></div>
+            <div class="kb-key"></div><div class="kb-key"></div><div class="kb-key"></div>
+            <div class="kb-key"></div>
+            <div class="kb-key wide"></div>
+          </div>
+          <div class="kb-row-keys">
+            <div class="kb-key wide"></div>
+            <div class="kb-key space"></div>
+            <div class="kb-key wide"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pc-mouse">
+        <div class="mouse-btn">
+          <div class="mbtn"></div>
+          <div class="mbtn"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plant -->
+    <div class="plant-group">
+      <div class="plant-inner">
+        <div class="stem" id="main-stem">
+          <div class="leaf"         style="width:34px;height:18px;background:#1a6028;top:8px;left:4px;--lox:0%;--lw:4.2s;--ld:0s;--lr:-40deg;transform:rotate(-40deg)"></div>
+          <div class="leaf leaf2"   style="width:30px;height:16px;background:#1e7030;top:18px;left:-34px;--lw:5s;--ld:-.6s;--lr:35deg;transform:rotate(35deg)"></div>
+          <div class="leaf"         style="width:38px;height:20px;background:#155224;top:30px;left:4px;--lox:0%;--lw:4.8s;--ld:-1.1s;--lr:-50deg;transform:rotate(-50deg)"></div>
+          <div class="leaf leaf2"   style="width:32px;height:17px;background:#1c6a2c;top:42px;left:-36px;--lw:5.5s;--ld:-.4s;--lr:42deg;transform:rotate(42deg)"></div>
+          <div class="leaf drooper" style="width:28px;height:14px;background:#247034;top:20px;left:4px;--lox:0%;--lw:3.8s;--ld:-.8s;--lr:-20deg;transform:rotate(-20deg)"></div>
+          <div class="leaf leaf2 drooper" style="width:26px;height:13px;background:#1e6830;top:52px;left:-30px;--lw:6s;--ld:-1.5s;--lr:28deg;transform:rotate(28deg)"></div>
+          <div class="leaf"         style="width:20px;height:11px;background:#2a803a;top:58px;left:3px;--lox:0%;--lw:4s;--ld:-.2s;--lr:-30deg;transform:rotate(-30deg)"></div>
+          <div class="tiny-leaf"    style="width:10px;height:10px;background:#2a8040;bottom:-2px;left:50%;transform:translateX(-50%);--lw:3.5s;--ld:-.9s"></div>
+        </div>
+        <div class="pot">
+          <div class="pot-rim"></div>
+          <div class="pot-soil"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Timezone Drawer -->
+    <div class="tz-drawer" id="tz-drawer">
+      <div class="tz-drawer-head">
+        <span class="tz-drawer-title">🌐 World Clocks</span>
+        <button class="tz-close" id="tz-close">✕</button>
+      </div>
+      <div class="tz-list" id="tz-list"></div>
+    </div>
+
+    <!-- ══ SETTINGS MODAL ══ -->
+    <div class="settings-modal" id="settings-modal">
+      <div class="settings-card">
+        <button class="settings-close" id="settings-close">✕</button>
+
+        <div class="settings-logo">
+          <div class="s-icon">🕐</div>
+          <div class="s-brand">KRONOS</div>
+          <div class="s-tagline">World Time · Study Ambient</div>
+        </div>
+
+        <div class="settings-divider"></div>
+
+        <div class="settings-about">
+          <p>KRONOS is a living study companion — a world clock app wrapped in an ambient scene that breathes with the time of day. Watch the sky shift from dawn to dusk, let rain fall, and let soft procedural audio keep you in flow.</p>
+        </div>
+
+        <div class="settings-divider"></div>
+
+        <div class="settings-section-label">FOUNDERS</div>
+        <div class="founders-grid">
+          <div class="founder-card">
+            <div class="founder-avatar">NKS</div>
+            <div class="founder-name">Nawal Kishore S Pai</div>
+            <div class="founder-role">Co-Founder</div>
+          </div>
+          <div class="founder-card">
+            <div class="founder-avatar">GB</div>
+            <div class="founder-name">Gokul B</div>
+            <div class="founder-role">Co-Founder</div>
+          </div>
+        </div>
+
+        <div class="settings-divider"></div>
+
+        <div class="settings-section-label">FEATURES</div>
+        <ul class="features-list">
+          <li>🌍 Live world clocks across all major timezones</li>
+          <li>🌤 Dynamic sky that reflects local time of day</li>
+          <li>🌧 Toggleable rain with ambient sound effects</li>
+          <li>🎵 Procedural ambient study music</li>
+          <li>🖥 Retro CRT code terminal on the desk</li>
+          <li>🔍 Search any city or UTC offset instantly</li>
+        </ul>
+
+        <div class="settings-version">v2.0 · Built with ♥ for deep work</div>
+      </div>
+    </div>
+
+  </div>
+  <!-- end scene -->
+
+</div>
+<!-- end app -->
+
+<script src="script.js"></script>
+</body>
 </html>
