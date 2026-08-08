@@ -314,7 +314,7 @@ export default function Landing() {
           color: '#2a2830', fontSize: '0.8rem', fontFamily: 'IBM Plex Mono',
         }}>
           <span>KRONOS © 2025</span>
-          <span>Nawal Kishore S Pai · Gokul B</span>
+          <span>Nawal Kishore Satish Pai</span>
         </footer>
       </div>
     </>

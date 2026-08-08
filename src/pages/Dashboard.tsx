@@ -187,10 +187,11 @@ export default function Dashboard() {
 
         {/* LEFT SIDEBAR — World Clocks */}
         <div style={{
-          width:220, minWidth:220, flexShrink:0,
-          borderRight:'1px solid rgba(255,255,255,0.04)',
-          background:'rgba(10,11,16,0.95)',
+          width:224, minWidth:224, flexShrink:0,
+          borderRight:'1px solid rgba(255,255,255,0.045)',
+          background:'rgba(7,8,12,0.97)',
           display:'flex', flexDirection:'column', overflow:'hidden',
+          boxShadow:'4px 0 24px rgba(0,0,0,0.3)',
         }}>
           <WorldClockPanel
             cities={cities}
@@ -220,24 +221,33 @@ export default function Dashboard() {
 
         {/* RIGHT PANEL — Productivity widgets */}
         <div style={{
-          width:260, minWidth:260, flexShrink:0,
-          borderLeft:'1px solid rgba(255,255,255,0.04)',
-          background:'rgba(10,11,16,0.95)',
+          width:264, minWidth:264, flexShrink:0,
+          borderLeft:'1px solid rgba(255,255,255,0.045)',
+          background:'rgba(7,8,12,0.97)',
           display:'flex', flexDirection:'column', overflow:'hidden',
+          boxShadow:'-4px 0 24px rgba(0,0,0,0.3)',
         }}>
 
           {/* Focus Timer */}
-          <div style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', height:260, flexShrink:0 }}>
+          <div style={{
+            borderBottom:'1px solid rgba(255,255,255,0.04)',
+            height:268, flexShrink:0,
+            background:'rgba(10,11,16,0.5)',
+          }}>
             <FocusTimer />
           </div>
 
           {/* Task List */}
-          <div style={{ flex:1, borderBottom:'1px solid rgba(255,255,255,0.04)', overflow:'hidden', display:'flex', flexDirection:'column' }}>
+          <div style={{
+            flex:1,
+            borderBottom:'1px solid rgba(255,255,255,0.04)',
+            overflow:'hidden', display:'flex', flexDirection:'column',
+          }}>
             <TaskList />
           </div>
 
           {/* Notes */}
-          <div style={{ height:160, flexShrink:0, display:'flex', flexDirection:'column' }}>
+          <div style={{ height:162, flexShrink:0, display:'flex', flexDirection:'column' }}>
             <NotesWidget />
           </div>
         </div>

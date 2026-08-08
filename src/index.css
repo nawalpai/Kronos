@@ -118,6 +118,58 @@ body {
   from { width: 0; }
 }
 
+/* Curtain sway — wind effect */
+@keyframes sway {
+  0%, 100% { transform: skewX(0deg) scaleX(1); }
+  25%       { transform: skewX(1.5deg) scaleX(1.02); }
+  75%       { transform: skewX(-1deg) scaleX(0.99); }
+}
+
+/* Dust particle float */
+@keyframes dustFloat {
+  0%        { transform: translateX(0) translateY(0) rotate(0deg); opacity: 0; }
+  10%       { opacity: 1; }
+  90%       { opacity: 0.6; }
+  100%      { transform: translateX(var(--dx, 40px)) translateY(var(--dy, -60px)) rotate(var(--dr, 180deg)); opacity: 0; }
+}
+
+/* Ambient glow pulse for desk lamp */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.06); }
+}
+
+/* Slow rotate for 3D background orb */
+@keyframes slowRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Atmospheric depth shimmer */
+@keyframes shimmer {
+  0%, 100% { opacity: 0.3; transform: translateX(-5%) scaleY(1); }
+  50%       { opacity: 0.55; transform: translateX(5%) scaleY(1.04); }
+}
+
+/* Fog drift */
+@keyframes fogDrift {
+  0%   { transform: translateX(-10%) translateY(0); opacity: 0.18; }
+  50%  { transform: translateX(8%)  translateY(-6px); opacity: 0.28; }
+  100% { transform: translateX(-10%) translateY(0); opacity: 0.18; }
+}
+
+/* Vignette overlay pulse */
+@keyframes vignettePulse {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 0.85; }
+}
+
+/* Panel slide-in */
+@keyframes slideInRight {
+  from { transform: translateX(12px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

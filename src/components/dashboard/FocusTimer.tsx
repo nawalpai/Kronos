@@ -37,34 +37,38 @@ export default function FocusTimer() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [running])
 
-  const total   = DURATIONS[mode]
-  const pct     = 1 - seconds / total
-  const color   = COLORS[mode]
-  const mins    = Math.floor(seconds / 60)
-  const secs    = seconds % 60
-
-  const r  = 54
-  const cx = 68
-  const circumference = 2 * Math.PI * r
-  const dash = circumference * pct
+  const total         = DURATIONS[mode]
+  const pct           = 1 - seconds / total
+  const color         = COLORS[mode]
+  const mins          = Math.floor(seconds / 60)
+  const secs          = seconds % 60
+  const circumference = 2 * Math.PI * 56
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', padding:'0.75rem 0.75rem 0.5rem' }}>
-      <span style={{ fontFamily:'IBM Plex Mono', fontSize:'0.68rem', color:'#3a3748', letterSpacing:'0.12em', marginBottom:'0.6rem' }}>FOCUS TIMER</span>
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', padding:'0.8rem 0.9rem 0.6rem' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.65rem' }}>
+        <span style={{ fontFamily:'IBM Plex Mono', fontSize:'0.62rem', color:'#2e2c3a', letterSpacing:'0.14em' }}>FOCUS TIMER</span>
+        {sessions > 0 && (
+          <span style={{ fontFamily:'IBM Plex Mono', fontSize:'0.6rem', color:'#3a3748' }}>
+            {sessions}× today
+          </span>
+        )}
+      </div>
 
       {/* Mode tabs */}
-      <div style={{ display:'flex', gap:'0.35rem', marginBottom:'0.75rem' }}>
+      <div style={{ display:'flex', gap:'0.3rem', marginBottom:'0.7rem', padding:'3px', background:'rgba(255,255,255,0.02)', borderRadius:8, border:'1px solid rgba(255,255,255,0.04)' }}>
         {(['work','short','long'] as Mode[]).map(m => (
           <button
             key={m}
             onClick={() => setMode(m)}
             style={{
-              flex:1, padding:'0.3rem 0', borderRadius:6, cursor:'pointer',
-              background: mode === m ? `rgba(${m === 'work' ? '201,162,39' : m === 'short' ? '110,231,216' : '167,139,250'},0.15)` : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${mode === m ? color : 'rgba(255,255,255,0.06)'}`,
+              flex:1, padding:'0.28rem 0', borderRadius:6, cursor:'pointer',
+              background: mode === m ? `rgba(${m === 'work' ? '201,162,39' : m === 'short' ? '110,231,216' : '167,139,250'},0.12)` : 'transparent',
+              border: `1px solid ${mode === m ? color + '50' : 'transparent'}`,
               color: mode === m ? color : '#3a3748',
-              fontFamily:'Inter', fontSize:'0.65rem', fontWeight:600,
-              transition:'all 0.2s',
+              fontFamily:'Inter', fontSize:'0.62rem', fontWeight: mode === m ? 700 : 500,
+              transition:'all 0.25s',
+              letterSpacing: '0.02em',
             }}
           >
             {LABELS[m]}
@@ -74,59 +78,82 @@ export default function FocusTimer() {
 
       {/* SVG ring */}
       <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-        <svg width={136} height={136} viewBox="0 0 136 136">
-          {/* Track */}
-          <circle cx={cx} cy={68} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
-          {/* Progress */}
-          <circle
-            cx={cx} cy={68} r={r}
-            fill="none"
-            stroke={color}
-            strokeWidth={8}
-            strokeLinecap="round"
-            strokeDasharray={`${dash} ${circumference}`}
-            strokeDashoffset={0}
-            transform="rotate(-90 68 68)"
-            style={{ transition:'stroke-dasharray 0.5s ease, stroke 0.5s ease', filter:`drop-shadow(0 0 6px ${color}80)` }}
-          />
-          {/* Time text */}
-          <text x={cx} y={62} textAnchor="middle" fill="#f2f0e8" fontFamily="IBM Plex Mono" fontSize={22} fontWeight={500}>
-            {String(mins).padStart(2,'0')}:{String(secs).padStart(2,'0')}
-          </text>
-          <text x={cx} y={80} textAnchor="middle" fill={color} fontFamily="Inter" fontSize={9} fontWeight={600} letterSpacing={2}>
-            {LABELS[mode].toUpperCase()}
-          </text>
-        </svg>
+        <div style={{ position:'relative' }}>
+          {/* Outer glow when running */}
+          {running && (
+            <div style={{
+              position:'absolute', inset:-8,
+              borderRadius:'50%',
+              background:`radial-gradient(ellipse, ${color}18 0%, transparent 70%)`,
+              animation:'glowPulse 3s ease-in-out infinite',
+            }} />
+          )}
+          <svg width={140} height={140} viewBox="0 0 140 140">
+            {/* Background track */}
+            <circle cx={70} cy={70} r={56} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={7} />
+            {/* Subtle inner ring */}
+            <circle cx={70} cy={70} r={46} fill="none" stroke="rgba(255,255,255,0.025)" strokeWidth={1} />
+            {/* Progress arc */}
+            <circle
+              cx={70} cy={70} r={56}
+              fill="none"
+              stroke={color}
+              strokeWidth={7}
+              strokeLinecap="round"
+              strokeDasharray={`${circumference * pct} ${circumference}`}
+              strokeDashoffset={0}
+              transform="rotate(-90 70 70)"
+              style={{
+                transition:'stroke-dasharray 0.6s ease, stroke 0.6s ease',
+                filter:`drop-shadow(0 0 8px ${color}90)`,
+              }}
+            />
+            {/* Time */}
+            <text x={70} y={65} textAnchor="middle" fill="#f0ece4" fontFamily="IBM Plex Mono" fontSize={24} fontWeight={500} letterSpacing={1}>
+              {String(mins).padStart(2,'0')}:{String(secs).padStart(2,'0')}
+            </text>
+            <text x={70} y={82} textAnchor="middle" fill={color} fontFamily="Inter" fontSize={8.5} fontWeight={700} letterSpacing={2.5} opacity={0.85}>
+              {LABELS[mode].toUpperCase()}
+            </text>
+          </svg>
+        </div>
 
         {/* Controls */}
-        <div style={{ display:'flex', gap:'0.6rem', marginTop:'0.6rem', alignItems:'center' }}>
+        <div style={{ display:'flex', gap:'0.5rem', marginTop:'0.75rem', alignItems:'center' }}>
           <button
             onClick={() => { setSeconds(DURATIONS[mode]); setRunning(false) }}
-            style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:6, color:'#5a5668', fontSize:'0.75rem', padding:'0.3rem 0.65rem', cursor:'pointer', fontFamily:'Inter' }}
+            style={{
+              background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)',
+              borderRadius:7, color:'#4a4858', fontSize:'0.8rem',
+              padding:'0.32rem 0.7rem', cursor:'pointer',
+              transition:'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color='#9490a0'; e.currentTarget.style.borderColor='rgba(255,255,255,0.14)' }}
+            onMouseLeave={e => { e.currentTarget.style.color='#4a4858'; e.currentTarget.style.borderColor='rgba(255,255,255,0.07)' }}
           >↺</button>
 
           <motion.button
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setRunning(r => !r)}
             style={{
-              background: running ? 'rgba(248,113,113,0.15)' : `rgba(${mode === 'work' ? '201,162,39' : mode === 'short' ? '110,231,216' : '167,139,250'},0.15)`,
-              border: `1px solid ${running ? '#f87171' : color}`,
+              background: running
+                ? 'rgba(248,113,113,0.1)'
+                : `rgba(${mode === 'work' ? '201,162,39' : mode === 'short' ? '110,231,216' : '167,139,250'},0.12)`,
+              border: `1px solid ${running ? 'rgba(248,113,113,0.5)' : color + '60'}`,
               borderRadius: 8, color: running ? '#f87171' : color,
-              fontSize:'0.82rem', padding:'0.4rem 1.2rem',
-              cursor:'pointer', fontFamily:'Space Grotesk', fontWeight:600,
-              boxShadow: running ? '0 0 12px rgba(248,113,113,0.2)' : `0 0 12px ${color}30`,
-              transition:'all 0.2s',
+              fontSize:'0.8rem', padding:'0.36rem 1.4rem',
+              cursor:'pointer', fontFamily:'Space Grotesk', fontWeight:700,
+              boxShadow: running
+                ? '0 2px 16px rgba(248,113,113,0.15)'
+                : `0 2px 16px ${color}25`,
+              letterSpacing:'0.04em',
+              transition:'all 0.25s',
             }}
           >
             {running ? '⏸ Pause' : '▶ Start'}
           </motion.button>
         </div>
-
-        {sessions > 0 && (
-          <div style={{ marginTop:'0.5rem', fontFamily:'IBM Plex Mono', fontSize:'0.65rem', color:'#3a3748' }}>
-            {sessions} session{sessions > 1 ? 's' : ''} completed today
-          </div>
-        )}
       </div>
     </div>
   )
